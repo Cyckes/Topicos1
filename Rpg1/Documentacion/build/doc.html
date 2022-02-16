@@ -1,0 +1,663 @@
+
+<!DOCTYPE html>
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Juego RPG con Reglas Léxicas y Sintácticas en Ply &#8212; documentación de RpgApp - 1.0</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/translations.js"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+    <link rel="prev" title="Bienvenido a la Documentacion de la APP RPG" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="juego-rpg-con-reglas-lexicas-y-sintacticas-en-ply">
+<h1>Juego RPG con Reglas Léxicas y Sintácticas en Ply<a class="headerlink" href="#juego-rpg-con-reglas-lexicas-y-sintacticas-en-ply" title="Enlazar permanentemente con este título">¶</a></h1>
+<p>Este problema específico trata de un jugador dentro de una habitación con una puerta.
+El jugador puede abrir, cerrar y cerrar con llave la puerta, si consigue la llave que se encuentra en la habitación.
+Dentro de la habitación hay 2 llaves. El jugador también podrá tirar o guardar la llave, una vez la haya adquirido.</p>
+<div class="section" id="codigo">
+<h2>Código<a class="headerlink" href="#codigo" title="Enlazar permanentemente con este título">¶</a></h2>
+<p>El código utilizado para la resolución de este problema fue el siguiente:</p>
+<div class="section" id="imports-utilizados">
+<h3>Imports utilizados<a class="headerlink" href="#imports-utilizados" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>Para realizar el proyecto, se utilizaron varios módulos.</p>
+<p>Los módulos utilizados fueron:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="kn">import</span> <span class="n">QApplication</span><span class="p">,</span> <span class="n">QFileDialog</span><span class="p">,</span> <span class="n">QMainWindow</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtCore</span> <span class="kn">import</span> <span class="n">Qt</span>
+</pre></div>
+</div>
+<p>Dentro de layoutqt se encuentra el diseño de la gui utilizada, creada con QTPython</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">layoutqt</span> <span class="kn">import</span> <span class="n">Ui_MainWindow</span>
+</pre></div>
+</div>
+<p>Se utilizó Ply para la creación del lexer y el parser.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ply.lex</span> <span class="k">as</span> <span class="nn">lex</span>
+<span class="kn">import</span> <span class="nn">ply.yacc</span> <span class="k">as</span> <span class="nn">yacc</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="variables-globales">
+<h3>Variables globales<a class="headerlink" href="#variables-globales" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>Para manejar variables que se utilizan en varios procesos, declaramos variables globales que se irán modificando a medida que se ejecuta el código.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">doorStat</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="clase-rpgapp">
+<h3>Clase RpgApp<a class="headerlink" href="#clase-rpgapp" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>Creamos una clase llamada RpgApp, la cual tendrá como parámetro QMainWindow, lo que la enlazará con la interfaz gráfica creada.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">RpgApp</span><span class="p">(</span><span class="n">QMainWindow</span><span class="p">):</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="funcion-init">
+<h3>Función __init__<a class="headerlink" href="#funcion-init" title="Enlazar permanentemente con este título">¶</a></h3>
+<dl class="simple">
+<dt>Dentro de esta función se inicia y conecta el botón que se utiliza para que se lea el input,</dt><dd><p>como se mostrará a coninuación:</p>
+</dd>
+</dl>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">ui</span> <span class="o">=</span> <span class="n">Ui_MainWindow</span><span class="p">()</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">setupUi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">okbtn</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rpg</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="tokens-utilizados">
+<h3>Tokens utilizados<a class="headerlink" href="#tokens-utilizados" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>Los tokens utilizados en este programa fueron:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;PUERTA&#39;</span><span class="p">,</span> <span class="s1">&#39;JUGADOR&#39;</span><span class="p">,</span> <span class="s1">&#39;LLAVE&#39;</span><span class="p">,</span> <span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="reglas-creadas">
+<h3>Reglas creadas<a class="headerlink" href="#reglas-creadas" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>Las reglas que se utilizaron para cada token fueron:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#Reglas para las regex</span>
+      <span class="n">t_ignore</span> <span class="o">=</span> <span class="s1">&#39; </span><span class="se">\t</span><span class="s1">&#39;</span> <span class="c1">#espacios y TABS</span>
+
+      <span class="c1">#Funcion para la puerta</span>
+      <span class="k">def</span> <span class="nf">t_PUERTA</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+         <span class="sa">r</span><span class="s1">&#39;abrir|cerrar|conLlave&#39;</span>
+         <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;PUERTA&#39;</span>
+         <span class="k">return</span> <span class="n">t</span>
+
+              <span class="c1">#Funcion para el movimiento del jugador</span>
+      <span class="k">def</span> <span class="nf">t_JUGADOR</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+         <span class="sa">r</span><span class="s1">&#39;up|down|right|left&#39;</span>
+         <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;JUGADOR&#39;</span>
+         <span class="k">return</span> <span class="n">t</span>
+
+          <span class="c1">#Funcion para el estado de la llave</span>
+      <span class="k">def</span> <span class="nf">t_LLAVE</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+         <span class="sa">r</span><span class="s1">&#39;guardar|tirar&#39;</span>
+         <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;LLAVE&#39;</span>
+         <span class="k">return</span> <span class="n">t</span>
+
+              <span class="c1">#Nombre del heroe</span>
+      <span class="k">def</span> <span class="nf">t_NAME</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+         <span class="sa">r</span><span class="s1">&#39;[a-zA-Z_][a-zA-Z_0-9]*&#39;</span>
+         <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;NAME&#39;</span>
+         <span class="k">return</span> <span class="n">t</span>
+
+      <span class="k">def</span> <span class="nf">t_error</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Carácter Ilegal &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">t</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+         <span class="n">t</span><span class="o">.</span><span class="n">lexer</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Las reglas anteriormente definidas nos indican los comandos que se pueden introducir dentro del juego, ya que son parte del lenguaje.</p>
+</div>
+<div class="section" id="lexer">
+<h3>Lexer<a class="headerlink" href="#lexer" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>El lexer escanea la entrada y produce los tokens correspondientes.</p>
+<p>A continuación, se presentará la construcción del lexer:
+.. code-block:: python</p>
+<blockquote>
+<div><p>lex.lex()</p>
+</div></blockquote>
+</div>
+<div class="section" id="funciones-de-reglas">
+<h3>Funciones de reglas<a class="headerlink" href="#funciones-de-reglas" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>A continuación se verán las funciones creadas para cada tipo de token.</p>
+<div class="section" id="funcion-de-definicion-de-sintaxis">
+<h4>Funcion de definicion de sintaxis<a class="headerlink" href="#funcion-de-definicion-de-sintaxis" title="Enlazar permanentemente con este título">¶</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">p_rpg</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+     <span class="c1">#Creación de reglas</span>
+     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     todo : expression</span>
+<span class="sd">              | empty</span>
+<span class="sd">     &quot;&quot;&quot;</span>
+     <span class="n">s</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">run</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+     <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">outputtxt</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Dentro de esta función, se define la sintaxis y se imprime en el editText llamado outputtxt la salida de la función run.</p>
+</div>
+<div class="section" id="funciones-de-valores-de-entrada">
+<h4>Funciones de valores de entrada<a class="headerlink" href="#funciones-de-valores-de-entrada" title="Enlazar permanentemente con este título">¶</a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#Para líneas vacías</span>
+    <span class="k">def</span> <span class="nf">p_empty</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+       <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">       empty :</span>
+<span class="sd">      &quot;&quot;&quot;</span>
+       <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1">#para nombrar al heroe</span>
+    <span class="k">def</span> <span class="nf">p_expname</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+       <span class="sd">&#39;&#39;&#39;expression : NAME</span>
+<span class="sd">       &#39;&#39;&#39;</span>
+       <span class="k">try</span><span class="p">:</span>
+              <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+       <span class="k">except</span> <span class="ne">LookupError</span><span class="p">:</span>
+              <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Undefined name </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+              <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1">#Para el movimiento del heroe</span>
+    <span class="k">def</span> <span class="nf">p_moveplayer</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+      <span class="s1">&#39;expression : JUGADOR&#39;</span>
+      <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1">#Para el estado de la llave</span>
+    <span class="k">def</span> <span class="nf">p_key</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+       <span class="s1">&#39;expression : LLAVE&#39;</span>
+       <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1">#Para el estado de la puerta</span>
+    <span class="k">def</span> <span class="nf">p_doorstatur</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+       <span class="s1">&#39;expression : PUERTA&#39;</span>
+       <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">p_error</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+       <span class="n">s</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Error de sintaxis!&quot;</span><span class="p">)</span>
+       <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">outputtxt</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Se puede apreciar que hay una función para cada regla creada anteriormente.</p>
+</div>
+</div>
+<div class="section" id="parser">
+<h3>Parser<a class="headerlink" href="#parser" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>El parser analiza los tokens y produce el resultado del análisis.</p>
+<p>A continuación, se presentará la construcción del parser:
+.. code-block:: python</p>
+<blockquote>
+<div><p>parser = yacc.yacc(debug=True)</p>
+</div></blockquote>
+</div>
+<div class="section" id="funcion-principal">
+<h3>Función principal<a class="headerlink" href="#funcion-principal" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>Se definirá la función run, encargada de revisar las entradas y realizar las operaciones necesarias en cada caso.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#Funcion principal</span>
+      <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+              <span class="k">global</span> <span class="n">aux</span>
+
+              <span class="c1">#array de la ubicacion de la llave, el jugador empieza en pm[0][0]</span>
+              <span class="n">pm</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]]</span>
+              <span class="k">global</span> <span class="n">i</span>
+              <span class="k">global</span> <span class="n">j</span>
+
+              <span class="c1">#variable auxiliar para saber el estado de la llave</span>
+              <span class="n">aux</span> <span class="o">=</span> <span class="n">pm</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+
+              <span class="c1">#Movimiento del heroe</span>
+              <span class="k">if</span> <span class="n">p</span> <span class="o">==</span><span class="s1">&#39;up&#39;</span><span class="p">:</span>
+                      <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
+                      <span class="n">aux</span> <span class="o">=</span> <span class="n">pm</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                      <span class="k">if</span> <span class="n">aux</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;Has encontrado la llave! Intenta abrir la puerta&quot;</span><span class="p">)</span>
+                      <span class="k">else</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;La llave no esta aqui, intenta moverte en otra direccion.</span><span class="se">\n</span><span class="s2">Puedes moverte hacia arriba (up), abajo (down), derecha (right) o izquierda (left).&quot;</span><span class="p">)</span>
+
+              <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;down&#39;</span><span class="p">:</span>
+                      <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+                      <span class="n">aux</span> <span class="o">=</span> <span class="n">pm</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                      <span class="k">if</span> <span class="n">aux</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;Has encontrado la llave! Intenta abrir la puerta&quot;</span><span class="p">)</span>
+                              <span class="c1">#return</span>
+                      <span class="k">else</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;La llave no esta aqui, intenta moverte en otra direccion.</span><span class="se">\n</span><span class="s2">Puedes moverte hacia arriba (up), abajo (down), derecha (right) o izquierda (left).&quot;</span><span class="p">)</span>
+
+              <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;right&#39;</span><span class="p">:</span>
+                      <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+                      <span class="n">aux</span> <span class="o">=</span> <span class="n">pm</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                      <span class="k">if</span> <span class="n">aux</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;Has encontrado la llave! Intenta abrir la puerta&quot;</span><span class="p">)</span>
+                              <span class="c1">#return</span>
+                      <span class="k">else</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;La llave no esta aqui, intenta moverte en otra direccion.</span><span class="se">\n</span><span class="s2">Puedes moverte hacia arriba (up), abajo (down), derecha (right) o izquierda (left).&quot;</span><span class="p">)</span>
+
+              <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;left&#39;</span><span class="p">:</span>
+                      <span class="n">j</span> <span class="o">-=</span> <span class="mi">1</span>
+                      <span class="n">aux</span> <span class="o">=</span> <span class="n">pm</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                      <span class="k">if</span> <span class="n">aux</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;Has encontrado la llave! Intenta abrir la puerta&quot;</span><span class="p">)</span>
+                              <span class="c1">#return</span>
+                      <span class="k">else</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;La llave no esta aqui, intenta moverte en otra direccion.</span><span class="se">\n</span><span class="s2">Puedes moverte hacia arriba (up), abajo (down), derecha (right) o izquierda (left).&quot;</span><span class="p">)</span>
+
+              <span class="c1">#Estado de la puerta</span>
+              <span class="k">global</span> <span class="n">doorStat</span>
+              <span class="k">if</span> <span class="n">aux</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                      <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;abrir&#39;</span><span class="p">:</span>
+                              <span class="k">if</span> <span class="n">doorStat</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                                      <span class="k">return</span><span class="p">(</span><span class="s2">&quot;La puerta ya estaba abierta. Intenta cerrarla o ponerle llave.&quot;</span><span class="p">)</span>
+                              <span class="k">else</span><span class="p">:</span>
+                                      <span class="n">doorStat</span> <span class="o">=</span> <span class="mi">1</span>
+                                      <span class="k">return</span><span class="p">(</span><span class="s2">&quot;Has abierto la puerta. Ahora pueden entrar mounstros.&quot;</span><span class="p">)</span>
+                      <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;cerrar&#39;</span><span class="p">:</span>
+                              <span class="k">if</span> <span class="n">doorStat</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                                      <span class="n">doorStat</span> <span class="o">=</span> <span class="mi">0</span>
+                                      <span class="k">return</span><span class="p">(</span><span class="s2">&quot;Has cerrado la puerta. Ya no pueden entrar mas mounstros.&quot;</span><span class="p">)</span>
+                              <span class="k">else</span><span class="p">:</span>
+                                      <span class="k">return</span><span class="p">(</span><span class="s2">&quot;La puerta ya estaba cerrada. Intenta abrirla o ponerle llave.&quot;</span><span class="p">)</span>
+                      <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;conLlave&#39;</span><span class="p">:</span>
+                              <span class="k">if</span> <span class="n">doorStat</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                                      <span class="n">doorStat</span> <span class="o">=</span> <span class="mi">2</span>
+                                      <span class="k">return</span><span class="p">(</span><span class="s2">&quot;Has cerrado la puerta con llave. La puerta ahora se encuentra cerrada y con llave&quot;</span><span class="p">)</span>
+                              <span class="k">else</span><span class="p">:</span>
+                                      <span class="k">return</span><span class="p">(</span><span class="s2">&quot;La puerta ya estaba cerrada con llave. Intenta abrirla o cerrarla (sin llave).&quot;</span><span class="p">)</span>
+              <span class="k">if</span> <span class="n">aux</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1">#Si aux esta en 0, el heroe no tiene la lave, por lo que no podrá realizar ninguna acción que requiera llave</span>
+                      <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;abrir&#39;</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;cerrar&#39;</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;conLlave&#39;</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;tirar&#39;</span> <span class="ow">or</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;guardar&#39;</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s2">&quot;Aun no tienes la llave! Intenta moverte hacia arriba (up), abajo (down), derecha (right) o izquierda (left).&quot;</span><span class="p">)</span>
+
+              <span class="c1">#Tirar o guardar las llaves</span>
+              <span class="k">if</span> <span class="n">aux</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                      <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;tirar&#39;</span><span class="p">:</span>
+                              <span class="n">aux</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1">#Si decide tirar las llave, la variable aux cambiar&#39;a a 0 para indicar que no tiene la llave</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s1">&#39;Has tirado la llave. si quieres encontrarla de nuevo, tienes que moverte.</span><span class="se">\n</span><span class="s1">Puedes moverte hacia arriba (up), abajo (down), derecha (right) o izquierda (left).&#39;</span><span class="p">)</span>
+                              <span class="c1">#return</span>
+                      <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="s1">&#39;guardar&#39;</span><span class="p">:</span>
+                              <span class="k">return</span><span class="p">(</span><span class="s1">&#39;Has guardado la llave en tu bolsillo. Puedes abrir, cerrar y cerrar con llave la puerta.&#39;</span><span class="p">)</span>
+                              <span class="c1">#return</span>
+</pre></div>
+</div>
+<p>Dentro de esta función se ejecutan todas las órdenes que envie el jugador y, dependiendo de las circunstancias, las consecuencias cambiarán.</p>
+</div>
+<div class="section" id="entrada-por-parte-del-usuario">
+<h3>Entrada por parte del usuario<a class="headerlink" href="#entrada-por-parte-del-usuario" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>El usuario escribirá dentro de un editText llamado inputtxt y, este input, se guardará dentro de una variable s, para ser enviado al parser.</p>
+<p>Si el usuario escribe la palabra TERMINAR, saldrá un mensaje de despedida en el outputtxt.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">inputtxt</span><span class="o">.</span><span class="n">toPlainText</span><span class="p">()</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;TERMINAR&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">outputtxt</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;Programa terminado. Gracias por jugar!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+            <span class="c1">#parser.parse(s)</span>
+    <span class="k">else</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="main">
+<h3>Main<a class="headerlink" href="#main" title="Enlazar permanentemente con este título">¶</a></h3>
+<p>Para ejecutar la ventana del GUI, hay que iniciarla.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+  <span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+  <span class="n">ventana</span> <span class="o">=</span> <span class="n">RpgApp</span><span class="p">()</span>
+  <span class="n">ventana</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+  <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="codigo-de-la-interfaz-grafica">
+<h3>Código de la interfaz gráfica<a class="headerlink" href="#codigo-de-la-interfaz-grafica" title="Enlazar permanentemente con este título">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PyQt5</span> <span class="kn">import</span> <span class="n">QtCore</span><span class="p">,</span> <span class="n">QtGui</span><span class="p">,</span> <span class="n">QtWidgets</span>
+
+<span class="k">class</span> <span class="nc">Ui_MainWindow</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+  <span class="k">def</span> <span class="nf">setupUi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">MainWindow</span><span class="p">):</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">)</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="mi">672</span><span class="p">,</span> <span class="mi">384</span><span class="p">)</span>
+      <span class="n">palette</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="p">()</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">ButtonText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">ButtonText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">ButtonText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">setPalette</span><span class="p">(</span><span class="n">palette</span><span class="p">)</span>
+      <span class="n">icon</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="p">()</span>
+      <span class="n">icon</span><span class="o">.</span><span class="n">addPixmap</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPixmap</span><span class="p">(</span><span class="s2">&quot;C:/Users/Dani XD/Desktop/gameboy.png&quot;</span><span class="p">),</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="o">.</span><span class="n">Normal</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QIcon</span><span class="o">.</span><span class="n">On</span><span class="p">)</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">setWindowIcon</span><span class="p">(</span><span class="n">icon</span><span class="p">)</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+              <span class="s2">&quot;background-color: rgb(114, 45, 36);&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QWidget</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;centralwidget&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">okbtn</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QPushButton</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">okbtn</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QRect</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">311</span><span class="p">,</span> <span class="mi">41</span><span class="p">))</span>
+      <span class="n">palette</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="p">()</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">ButtonText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">ButtonText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">ButtonText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">167</span><span class="p">,</span> <span class="mi">122</span><span class="p">,</span> <span class="mi">75</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">okbtn</span><span class="o">.</span><span class="n">setPalette</span><span class="p">(</span><span class="n">palette</span><span class="p">)</span>
+      <span class="n">font</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFont</span><span class="p">()</span>
+      <span class="n">font</span><span class="o">.</span><span class="n">setPointSize</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+      <span class="n">font</span><span class="o">.</span><span class="n">setBold</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+      <span class="n">font</span><span class="o">.</span><span class="n">setWeight</span><span class="p">(</span><span class="mi">75</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">okbtn</span><span class="o">.</span><span class="n">setFont</span><span class="p">(</span><span class="n">font</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">okbtn</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">&quot;background-color: rgb(167, 122, 75);&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">okbtn</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;okbtn&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">inputtxt</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTextEdit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">inputtxt</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QRect</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">210</span><span class="p">,</span> <span class="mi">311</span><span class="p">,</span> <span class="mi">81</span><span class="p">))</span>
+      <span class="n">font</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFont</span><span class="p">()</span>
+      <span class="n">font</span><span class="o">.</span><span class="n">setPointSize</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">inputtxt</span><span class="o">.</span><span class="n">setFont</span><span class="p">(</span><span class="n">font</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">inputtxt</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">&quot;background-color: rgb(236, 198, 162);&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">inputtxt</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;inputtxt&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QRect</span><span class="p">(</span><span class="mi">110</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">116</span><span class="p">,</span> <span class="mi">23</span><span class="p">))</span>
+      <span class="n">palette</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="p">()</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">setPalette</span><span class="p">(</span><span class="n">palette</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">&quot;font: 75 14pt </span><span class="se">\&quot;</span><span class="s2">MS Shell Dlg 2</span><span class="se">\&quot;</span><span class="s2">;&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;label&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QRect</span><span class="p">(</span><span class="mi">390</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">210</span><span class="p">,</span> <span class="mi">23</span><span class="p">))</span>
+      <span class="n">palette</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="p">()</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Active</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Inactive</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">120</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">WindowText</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Button</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Base</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="n">brush</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QColor</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">36</span><span class="p">))</span>
+      <span class="n">brush</span><span class="o">.</span><span class="n">setStyle</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">Qt</span><span class="o">.</span><span class="n">SolidPattern</span><span class="p">)</span>
+      <span class="n">palette</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Disabled</span><span class="p">,</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QPalette</span><span class="o">.</span><span class="n">Window</span><span class="p">,</span> <span class="n">brush</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span><span class="o">.</span><span class="n">setPalette</span><span class="p">(</span><span class="n">palette</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">&quot;font: 75 14pt </span><span class="se">\&quot;</span><span class="s2">MS Shell Dlg 2</span><span class="se">\&quot;</span><span class="s2">;&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;label_2&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">outputtxt</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QTextEdit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">outputtxt</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QRect</span><span class="p">(</span><span class="mi">350</span><span class="p">,</span> <span class="mi">70</span><span class="p">,</span> <span class="mi">311</span><span class="p">,</span> <span class="mi">271</span><span class="p">))</span>
+      <span class="n">font</span> <span class="o">=</span> <span class="n">QtGui</span><span class="o">.</span><span class="n">QFont</span><span class="p">()</span>
+      <span class="n">font</span><span class="o">.</span><span class="n">setPointSize</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">outputtxt</span><span class="o">.</span><span class="n">setFont</span><span class="p">(</span><span class="n">font</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">outputtxt</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="s2">&quot;background-color: rgb(236, 198, 162);&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">outputtxt</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;outputtxt&quot;</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_3</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_3</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QRect</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">225</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_3</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;label_3&quot;</span><span class="p">)</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">setCentralWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">centralwidget</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">menubar</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMenuBar</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">menubar</span><span class="o">.</span><span class="n">setGeometry</span><span class="p">(</span><span class="n">QtCore</span><span class="o">.</span><span class="n">QRect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">672</span><span class="p">,</span> <span class="mi">21</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">menubar</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;menubar&quot;</span><span class="p">)</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">setMenuBar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">menubar</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">statusbar</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QStatusBar</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">statusbar</span><span class="o">.</span><span class="n">setObjectName</span><span class="p">(</span><span class="s2">&quot;statusbar&quot;</span><span class="p">)</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">setStatusBar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">statusbar</span><span class="p">)</span>
+
+      <span class="bp">self</span><span class="o">.</span><span class="n">retranslateUi</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">)</span>
+      <span class="n">QtCore</span><span class="o">.</span><span class="n">QMetaObject</span><span class="o">.</span><span class="n">connectSlotsByName</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">)</span>
+
+  <span class="k">def</span> <span class="nf">retranslateUi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">MainWindow</span><span class="p">):</span>
+      <span class="n">_translate</span> <span class="o">=</span> <span class="n">QtCore</span><span class="o">.</span><span class="n">QCoreApplication</span><span class="o">.</span><span class="n">translate</span>
+      <span class="n">MainWindow</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;Aventura RPG&quot;</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">okbtn</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Haz clic aquí para darle las instrucciones al heroe.&lt;/p&gt;&lt;p&gt;El resultado de tus instrucciones se verá en el cuadro de texto de la derecha.&lt;/p&gt;&lt;p&gt;¡Suerte!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;&quot;</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">okbtn</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;Ok&quot;</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">inputtxt</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ingresa aquí las instrucciones que le darás al heroe.&lt;/p&gt;&lt;p&gt;Puedes moverte en 4 direcciones, utilizando &lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt;up&lt;/span&gt; (arriba), &lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt;down&lt;/span&gt; (abajo),&lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt; right&lt;/span&gt; (derecha) o &lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt;left&lt;/span&gt; (izquierda).&lt;/p&gt;&lt;p&gt;Tambien puedes&lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt; abrir&lt;/span&gt; la puerta,&lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt; cerrar&lt;/span&gt; la puerta o ponerla &lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt;conLlave&lt;/span&gt;.&lt;/p&gt;&lt;p&gt;Al adquirir la llave, puedes&lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt; guardar&lt;/span&gt; la llave o&lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt; tirar&lt;/span&gt; la llave.&lt;/p&gt;&lt;p&gt;Para terminar la partida, deberás escribir &lt;span style=</span><span class="se">\&quot;</span><span class="s2"> font-weight:600;</span><span class="se">\&quot;</span><span class="s2">&gt;TERMINAR&lt;/span&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;&quot;</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;Aventura RPG&quot;</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_2</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;Resultado de la Aventura&quot;</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">outputtxt</span><span class="o">.</span><span class="n">setToolTip</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aquí aparecerán la consecuencias de las instrucciones que le des al heroe.&lt;/p&gt;&lt;p&gt;Suerte y... escoge con cuidado.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;&quot;</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_3</span><span class="o">.</span><span class="n">setWhatsThis</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=</span><span class="se">\&quot;</span><span class="s2">C:/Users/Dani XD/Desktop/heroes.png</span><span class="se">\&quot;</span><span class="s2">/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;&quot;</span><span class="p">))</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">label_3</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="n">_translate</span><span class="p">(</span><span class="s2">&quot;MainWindow&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;img src=</span><span class="se">\&quot;</span><span class="s2">C:/Users/Dani XD/Desktop/heroes.png</span><span class="se">\&quot;</span><span class="s2">/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;&quot;</span><span class="p">))</span>
+<span class="c1">#import rcs2_rc</span>
+<span class="c1">#import rsc_rc</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">sys</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+    <span class="n">MainWindow</span> <span class="o">=</span> <span class="n">QtWidgets</span><span class="o">.</span><span class="n">QMainWindow</span><span class="p">()</span>
+    <span class="n">ui</span> <span class="o">=</span> <span class="n">Ui_MainWindow</span><span class="p">()</span>
+    <span class="n">ui</span><span class="o">.</span><span class="n">setupUi</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">)</span>
+    <span class="n">MainWindow</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="imagen-de-la-interfaz-grafica">
+<h2>Imagen de la interfaz gráfica<a class="headerlink" href="#imagen-de-la-interfaz-grafica" title="Enlazar permanentemente con este título">¶</a></h2>
+<p>Interfaz</p>
+<img alt="_images/sc1.png" src="_images/sc1.png" />
+<p>Tooltips incorporados</p>
+<img alt="_images/sct1.png" src="_images/sct1.png" />
+<img alt="_images/sct2.png" src="_images/sct2.png" />
+<img alt="_images/sct3.png" src="_images/sct3.png" />
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">RpgApp</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navegación</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Juego RPG con Reglas Léxicas y Sintácticas en Ply</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#codigo">Código</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#imagen-de-la-interfaz-grafica">Imagen de la interfaz gráfica</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="capítulo anterior">Bienvenido a la Documentacion de la APP RPG</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Búsqueda rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Alain, Ramos, Torres.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/doc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
